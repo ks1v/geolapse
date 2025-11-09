@@ -19,7 +19,8 @@ move_series() {
     local files=("$@")
     
     if [ $num -gt 10 ]; then
-        local series_folder="TL_${count}_D-${delay}_N-${num}"
+        local rnd="$(LC_ALL=C tr -dc 'a-zA-Z' < /dev/urandom | head -c 3)"
+        local series_folder="TL_${count}_D-${delay}_N-${num}_${rnd}"
         local series_path="$TL_DIR/$series_folder"
         mkdir -p "$series_path"
         for f in "${files[@]}"; do
@@ -55,7 +56,10 @@ for file in "${files[@]}"; do
     # Convert to timestamp
     date_part="${datetime%_*}"
     time_part="${datetime#*_}"
-    iso_datetime="${date_part} ${time_part//-/:}"
+    #iso_datetime="${date_part} ${time_part//-/:}"
+    formatted_date="${date_part:0:4}-${date_part:4:2}-${date_part:6:2}"
+    formatted_time="${time_part:0:2}:${time_part:2:2}:${time_part:4:2}"
+    iso_datetime="${formatted_date} ${formatted_time}"
     
     if [[ "$OSTYPE" == "darwin"* ]]; then
         timestamp=$(date -j -f "%Y-%m-%d %H:%M:%S" "$iso_datetime" "+%s")

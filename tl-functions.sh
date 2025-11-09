@@ -1,32 +1,49 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # Function to detect and mount SD card
 find_and_mount_sd() {
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
         echo "Detecting SD card on macOS..." >&2
-        
-        # Find external disk
-        sd_disk=$(diskutil list | grep -i "external" | awk '{print $1}' | head -1)
-        
+
+        # Find all external disks
+        external_disks=$(diskutil list | grep "external" | grep -o '/dev/disk[0-9]*')
+
+        sd_disk=""
+        for disk in $external_disks; do
+            # Check if this disk is SD/MMC
+            if diskutil info "$disk" | grep -q "SD/MMC"; then
+                sd_disk="$disk"
+                break
+            fi
+        done
+
         if [ -z "$sd_disk" ]; then
             echo "No SD card detected" >&2
             return 1
         fi
-        
+
         echo "Found SD card: $sd_disk" >&2
-        
-        # Check if already mounted
-        mount_point=$(diskutil info "$sd_disk" | grep "Mount Point" | cut -d: -f2 | xargs)
-        
-        if [ -z "$mount_point" ]; then
-            # Mount the SD card
-            diskutil mount "$sd_disk"
-            mount_point=$(diskutil info "$sd_disk" | grep "Mount Point" | cut -d: -f2 | xargs)
+
+        # Find the first partition (usually s1)
+        sd_partition="${sd_disk}s1"
+
+        # Check if partition exists and get mount point
+        if diskutil info "$sd_partition" &>/dev/null; then
+            mount_point=$(diskutil info "$sd_partition" | grep "Mount Point" | cut -d: -f2 | xargs)
+            
+            if [ -z "$mount_point" ]; then
+                # Mount the partition
+                diskutil mount "$sd_partition"
+                mount_point=$(diskutil info "$sd_partition" | grep "Mount Point" | cut -d: -f2 | xargs)
+            fi
+            
+            echo "SD card mounted at: $mount_point" >&2
+            echo "$mount_point"
+        else
+            echo "No valid partition found on $sd_disk" >&2
+            return 1
         fi
-        
-        echo "SD card mounted at: $mount_point" >&2
-        echo "$mount_point"
         
     elif grep -qi microsoft /proc/version 2>/dev/null; then
         # WSL
@@ -95,4 +112,59 @@ find_and_mount_sd() {
     fi
 }
 
-find_and_mount_sd
+# Function to check exit status ($?) and exit if non-zero.
+# Usage: check_status "Error message"
+check_status() {
+    local last_status=$?
+    local error_message=""
+
+    if [ $# -eq 0 ]; then
+        error_message="Unknown error"
+    else
+        error_message="$1"
+    fi
+
+    if [ "$last_status" -ne 0 ]; then
+        echo "Error: $error_message (Exit Code $last_status)" >&2
+        exit 1
+    fi
+}
+
+# Function to check for exiftool and install it if necessary.
+check_install_exiftool() {
+    if command -v exiftool >/dev/null 2>&1; then
+        echo "exiftool is installed."
+        return 0
+    fi
+
+    echo "exiftool not found. Attempting installation..."
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        brew install exiftool
+        check_status "Failed to install exiftool using brew."
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        sudo apt update && sudo apt install -y libimage-exiftool-perl
+        check_status "Failed to install exiftool using apt."
+    else
+        echo "Error: Unsupported OS. Please install exiftool manually." >&2
+        exit 1
+    fi
+}
+
+check_install_ffmpeg(){
+    if command -v ffmpeg >/dev/null 2>&1; then
+        echo "ffmpeg is installed."
+        return 0
+    fi
+
+    echo "ffmpeg not found. Attempting installation..."
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        brew install ffmpeg
+        check_status "Failed to install ffmpeg using brew."
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        sudo apt update && sudo apt install -y ffmpeg
+        check_status "Failed to install ffmpeg using apt."
+    else
+        echo Error: "Unsupported OS. Please install ffmpeg manually."
+        exit 1
+    fi
+}

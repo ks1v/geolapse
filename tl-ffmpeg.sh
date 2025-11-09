@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+#!/bin/bash
+source ./tl-functions.sh
 
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <TL_folder>"
@@ -8,20 +9,7 @@ fi
 TL_DIR="$1"
 framerate=30
 
-# Check if ffmpeg is installed
-if ! command -v ffmpeg >/dev/null 2>&1; then
-    echo "ffmpeg not found. Installing..."
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        brew install ffmpeg
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        sudo apt update && sudo apt install -y ffmpeg
-    else
-        echo "Unsupported OS. Please install ffmpeg manually."
-        exit 1
-    fi
-else
-    echo "ffmpeg is installed"
-fi
+check_install_ffmpeg
 
 # Process each TL subfolder
 for subfolder in "$TL_DIR"/TL_*; do
@@ -44,7 +32,7 @@ for subfolder in "$TL_DIR"/TL_*; do
     file_list="$subfolder/filelist.txt"
     find "$(cd "$subfolder" && pwd)" -name "*.jpg" | sort | sed "s/^/file '/" | sed "s/$/'/" > "$file_list"
     
-    ffmpeg -y -f concat -safe 0 -i "$file_list" -r "$framerate" \
+    ffmpeg -y -f concat -safe 0 -r "$framerate" -i "$file_list" \
         -c:v libx264 -b:v 50M -tune film -pix_fmt yuv420p \
         -loglevel error -stats \
         "$output_video"
