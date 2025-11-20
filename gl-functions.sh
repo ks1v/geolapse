@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Function to detect and mount SD card
 find_and_mount_sd() {
     if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -130,41 +128,29 @@ check_status() {
     fi
 }
 
-# Function to check for exiftool and install it if necessary.
-check_install_exiftool() {
-    if command -v exiftool >/dev/null 2>&1; then
-        echo "exiftool is installed."
+check_install(){
+    app_name="$1"
+
+    if command -v "$app_name" >/dev/null 2>&1; then
+        echo "$app_name is installed."
         return 0
     fi
 
-    echo "exiftool not found. Attempting installation..."
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        brew install exiftool
-        check_status "Failed to install exiftool using brew."
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        sudo apt update && sudo apt install -y libimage-exiftool-perl
-        check_status "Failed to install exiftool using apt."
-    else
-        echo "Error: Unsupported OS. Please install exiftool manually." >&2
-        exit 1
-    fi
-}
-
-check_install_ffmpeg(){
-    if command -v ffmpeg >/dev/null 2>&1; then
-        echo "ffmpeg is installed."
-        return 0
+    local install_name="$app_name"
+    # Handle special case for exiftool on Debian/Ubuntu
+    if [[ "$app_name" == "exiftool" && ("$OSTYPE" == "linux-gnu"* || "$OSTYPE" == "linux"*) ]]; then
+        install_name="libimage-exiftool-perl"
     fi
 
-    echo "ffmpeg not found. Attempting installation..."
+    echo "$app_name not found. Attempting installation..."
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        brew install ffmpeg
-        check_status "Failed to install ffmpeg using brew."
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        sudo apt update && sudo apt install -y ffmpeg
-        check_status "Failed to install ffmpeg using apt."
+        brew install "$install_name"
+        check_status "Failed to install $app_name using brew."
+    elif [[ "$OSTYPE" == "linux-gnu"* || "$OSTYPE" == "linux"* ]]; then
+        sudo apt update && sudo apt install -y "$install_name"
+        check_status "Failed to install $app_name using apt."
     else
-        echo Error: "Unsupported OS. Please install ffmpeg manually."
+        echo Error: "Unsupported OS. Please install $app_name manually."
         exit 1
     fi
 }

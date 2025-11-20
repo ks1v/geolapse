@@ -1,5 +1,16 @@
-#!/bin/bash
-source ./tl-functions.sh
+#!/bin/sh
+#
+# Polyglot Shell Launcher:
+# This block detects if we are running in bash on macOS and, if so,
+# re-executes the script with zsh to get access to better features.
+# On Linux, it will continue with bash. On zsh, it does nothing.
+if [ -n "$BASH_VERSION" ] && [ "$(uname)" = "Darwin" ]; then
+    # We are in bash on macOS, switch to zsh
+    exec zsh "$0" "$@"
+fi
+# --- End Launcher ---
+
+source ./gl-functions.sh
 
 # Check arguments and set variables
 if [ $# -ne 2 ]; then
@@ -11,12 +22,14 @@ TEMP_DIR="$2"
 
 
 # 1. Setup and Preparation
-#check_install_exiftool
+check_install_exiftool
 echo "Creating temporary directory: $TEMP_DIR"
 mkdir -p "$TEMP_DIR"
 check_status "Failed to create temporary directory $TEMP_DIR."
 
-read -p "Manual date in YYYYMMDD format: " manual_date
+
+read -p "Manual date in YYYYMMDD format (default: today): " input_date
+manual_date="${input_date:-$(date "+%Y%m%d")}"
 
 total_renamed=0
 
@@ -76,8 +89,18 @@ echo "--- Staging ---"
 echo "Moving $total_renamed renamed files to $TEMP_DIR..."
 
 # Move all *renamed* files (which now have a lowercase .jpg extension)
-# Add an extra check to prevent error message if no files match
-find "$DCIM_DIR" -maxdepth 2 -type f -name "*.jpg" -exec mv {} "$TEMP_DIR/" \; 2>/dev/null
+#find "$DCIM_DIR" -maxdepth 2 -type f -name "*.jpg" -exec mv {} "$TEMP_DIR/" \; 2>/dev/null
+total=$(find "$DCIM_DIR" -maxdepth 2 -type f -name "*.jpg" | wc -l)
+count=0
+find "$DCIM_DIR" -maxdepth 2 -type f -name "*.jpg" | while read -r file; do
+    mv "$file" "$TEMP_DIR/" 2>/dev/null
+    count=$((count + 1))
+    pct=$((count * 100 / total))
+    bar=$(printf '#%.0s' $(seq 1 $((pct / 2))))
+    printf "Progress: [%-50s] %d%% (%d/%d)\r" "$bar" "$pct" "$count" "$total"
+done
+echo -e "\nCompleted!"
+
 
 echo "Removing empty subfolders in $DCIM_DIR..."
 # The original code's find command is correct for this job

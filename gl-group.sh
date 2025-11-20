@@ -1,4 +1,15 @@
-#!/bin/bash
+#!/bin/sh
+#
+# Polyglot Shell Launcher:
+# This block detects if we are running in bash on macOS and, if so,
+# re-executes the script with zsh to get access to better features.
+# On Linux, it will continue with bash. On zsh, it does nothing.
+if [ -n "$BASH_VERSION" ] && [ "$(uname)" = "Darwin" ]; then
+    # We are in bash on macOS, switch to zsh
+    exec zsh "$0" "$@"
+fi
+# --- End Launcher ---
+
 if [ $# -ne 2 ]; then
     echo "Usage: $0 <TEMP_folder> <TL_folder>"
     exit 1
@@ -35,32 +46,28 @@ move_series() {
     fi
 }
 
-# Get sorted list of jpg files
-files=($(find "$TEMP_DIR" -name "*.jpg" -type f -exec basename {} \; | sort))
-if [ ${#files[@]} -eq 0 ]; then
-    echo "No jpg files found"
-    exit 0
-fi
-
 prev_file=""
 prev_timestamp=0
 current_delay=0
 series_count=0
 series_file_count=0
 series_files=()
+file_data=()
 
-for file in "${files[@]}"; do
-    # Extract datetime from filename: YYYY-MM-DD_HH-MM-SS_NNNNN.jpg
-    datetime="${file%_*}"
-    
-    # Convert to timestamp
-    date_part="${datetime%_*}"
-    time_part="${datetime#*_}"
-    #iso_datetime="${date_part} ${time_part//-/:}"
-    formatted_date="${date_part:0:4}-${date_part:4:2}-${date_part:6:2}"
-    formatted_time="${time_part:0:2}:${time_part:2:2}:${time_part:4:2}"
-    iso_datetime="${formatted_date} ${formatted_time}"
-    
+# Read file paths and EXIF timestamps in one go, then sort by timestamp.
+# This is more reliable than parsing filenames.
+while IFS='|' read -r timestamp file; do
+    file_data+=("$timestamp|$file")
+done < <(exiftool -d "%s" -p '$DateTimeOriginal|$filename' "$TEMP_DIR"/*.jpg 2>/dev/null | sort -n)
+
+if [ ${#file_data[@]} -eq 0 ]; then
+    echo "No jpg files with EXIF data found"
+    exit 0
+fi
+
+for item in "${file_data[@]}"; do
+    IFS='|' read -r timestamp file <<< "$item"
+
     if [[ "$OSTYPE" == "darwin"* ]]; then
         timestamp=$(date -j -f "%Y-%m-%d %H:%M:%S" "$iso_datetime" "+%s")
     else

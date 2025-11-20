@@ -1,5 +1,16 @@
-#!/bin/bash
-source ./tl-functions.sh
+#!/bin/sh
+#
+# Polyglot Shell Launcher:
+# This block detects if we are running in bash on macOS and, if so,
+# re-executes the script with zsh to get access to better features.
+# On Linux, it will continue with bash. On zsh, it does nothing.
+if [ -n "$BASH_VERSION" ] && [ "$(uname)" = "Darwin" ]; then
+    # We are in bash on macOS, switch to zsh
+    exec zsh "$0" "$@"
+fi
+# --- End Launcher ---
+
+source ./gl-functions.sh
 
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <TL_folder>"
@@ -9,7 +20,7 @@ fi
 TL_DIR="$1"
 framerate=30
 
-check_install_ffmpeg
+check_install "ffmpeg"
 
 # Process each TL subfolder
 for subfolder in "$TL_DIR"/TL_*; do
