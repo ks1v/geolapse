@@ -121,7 +121,8 @@ if [[ "$HAS_GPX" == "true" ]]; then
     GPX_TS=()
     GPX_LATS=()
     GPX_LONGS=()
-    while IFS='|' read -r lat lon time_str; do
+    GPX_ELEVS=()
+    while IFS='|' read -r lat lon ele time_str; do
         if [[ -n "$time_str" ]]; then
             if [[ "$OSTYPE" == "darwin"* ]]; then
                 utc_ts=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$time_str" "+%s" 2>/dev/null)
@@ -132,11 +133,16 @@ if [[ "$HAS_GPX" == "true" ]]; then
             GPX_TS+=("$local_ts")
             GPX_LATS+=("$lat")
             GPX_LONGS+=("$lon")
+            GPX_ELEVS+=("$ele")
         fi
     done < <(xmlstarlet sel -N "gpx=http://www.topografix.com/GPX/1/1" -t -m "//gpx:trkpt" \
-        -v "@lat" -o '|' -v "@lon" -o '|' -v "gpx:time" -n "$GPX_FILE" 2>/dev/null)
+        -v "@lat" -o '|' -v "@lon" -o '|' -v "gpx:ele" -o '|' -v "gpx:time" -n "$GPX_FILE" 2>/dev/null)
 
     echo "Loaded ${#GPX_TS[@]} GPS trackpoints"
+    echo "  TS: ${#GPX_TS[@]}"
+    echo "  LA: ${#GPX_LATS[@]}"
+    echo "  LO: ${#GPX_LONGS[@]}"
+    echo "  EL: ${#GPX_ELEVS[@]}"
 
     # Unified way to show first 5 elements
     echo "First 5 timestamps: $(echo "${GPX_TS[@]}" | tr ' ' '\n' | head -5 | tr '\n' ' ')"
@@ -192,11 +198,16 @@ for item in "${IMG_DIR_TS[@]}"; do
                 closest_idx=$((GPX_INDEX + 1))
             fi
         fi
-
+        elevation=${GPX_ELEVS[$closest_idx]}
         latitude=${GPX_LATS[$closest_idx]}
         longitude=${GPX_LONGS[$closest_idx]}
-        exif_args+=(-GPSLatitude="$latitude" -GPSLongitude="$longitude")
-        echo "EXIF for $(basename "$filepath") -> $actual_dt @ $latitude, $longitude"
+        lat_ref="N" && [[ $latitude == -* ]] && lat_ref="S"
+        lon_ref="E" && [[ $longitude == -* ]] && lon_ref="W"
+        exif_args+=(-GPSLatitude="$latitude" -GPSLatitudeRef="$lat_ref" \
+                    -GPSLongitude="$longitude" -GPSLongitudeRef="$lon_ref" -GPSAltitude="$elevation")
+
+        
+        echo "EXIF for $(basename "$filepath") -> $actual_dt @ $lat_ref $latitude, $lon_ref $longitude, $elevation m"
     else
         echo "EXIF for $(basename "$filepath") -> $actual_dt"
     fi
@@ -239,7 +250,7 @@ if [[ "$HAS_GPX" == "true" ]]; then
 else
     check_condition='$DateTimeOriginal =~ /^2016/'
 fi
-unprocessed_files=$(exiftool -m -n -q -p '$filename | $DateTimeOriginal | $GPSLatitude, $GPSLongitude' -d '%Y-%m-%d %H:%M:%S' -if "$check_condition" "$IMG_DIR")
+unprocessed_files=$(exiftool -m -n -q -p '$filename | $DateTimeOriginal | $GPSLatitude, $GPSLongitude, $GPSAltitude' -d '%Y-%m-%d %H:%M:%S' -if "$check_condition" "$IMG_DIR")
 
 if [[ -n "$unprocessed_files" ]]; then
     echo "Untreated files found:"
