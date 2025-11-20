@@ -18,5 +18,5 @@ Written in shell, for both MacOS's zsh and Ubuntu WSL's bash
 * [x] Reassemble logic for GPX data
 * [x] Add elevation data
 * [x] Why GPS don't show on Samgung? (LatRef and LonRef are neccessery fields)
-* [ ] Skip manual timestamp input if GPS track is aligned with the first image 
+* [x] Skip manual timestamp input if GPS track is aligned with the first image 
 * [ ] Find shots with birds in timelapses 

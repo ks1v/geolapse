@@ -154,3 +154,21 @@ check_install(){
         exit 1
     fi
 }
+
+iso_to_unix() {
+    local datetime_str="$1"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        date -j -f "%Y-%m-%d %H:%M:%S" "$datetime_str" "+%s" 2>/dev/null
+    else
+        date -d "$datetime_str" "+%s" 2>/dev/null
+    fi
+}
+
+unix_to_iso() {
+    local unix_ts="$1"
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        date -j -r "$unix_ts" "+%Y-%m-%d %H:%M:%S" 2>/dev/null
+    else
+        date -d "@$unix_ts" "+%Y-%m-%d %H:%M:%S" 2>/dev/null
+    fi
+}
