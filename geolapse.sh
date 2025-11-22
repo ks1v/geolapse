@@ -10,7 +10,12 @@ if [ -n "$BASH_VERSION" ] && [ "$(uname)" = "Darwin" ]; then
 fi
 # --- End Launcher ---
 
-source ./gl-functions.sh
+# Determine the absolute path of the directory where the script is located
+# This is a robust way to get the script's directory, even with symlinks.
+# It does not change the working directory of the script.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" &> /dev/null && pwd)"
+
+source "$SCRIPT_DIR/gl-functions.sh"
 
 # Configuration
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -43,30 +48,25 @@ check_status "DCIM folder not found"
 echo "Source set: $DCIM_PATH"
 
 echo "Step 2: Rename and move files from DCIM to TEMP"
-./gl-stage.sh "$DCIM_PATH" "$TEMP_PATH"
+"$SCRIPT_DIR/gl-stage.sh" "$DCIM_PATH" "$TEMP_PATH"
 check_status "Failed to process DCIM files"
 echo
 
 #sudo umount "$SD_MOUNT"
 
 echo "Step 3: Grouping timelapse series"
-./gl-group.sh "$TEMP_PATH" "$TL_PATH"
+"$SCRIPT_DIR/gl-group.sh" "$TEMP_PATH" "$TL_PATH"
 check_status "Failed to group timelapse series"
 echo
 
 echo "Step 4: Generating videos from timelapse series"
-./gl-build.sh "$TL_PATH"
+"$SCRIPT_DIR/gl-build.sh" "$TL_PATH"
 check_status "Failed to generate videos"
 echo "Videos are located in: $TL_PATH"
 echo
 
 echo "Step 5: Renaming non-timelapse shots and fixing it's EXIF data"
-./gl-shots.sh "$TL_PATH/MISC/"
-check_status "Failed to rename non-timelapse shots"
-echo
-
-echo "END"
-./gl-shots.sh "$TL_PATH/MISC/"
+"$SCRIPT_DIR/gl-shots.sh" "$TL_PATH/MISC/"
 check_status "Failed to rename non-timelapse shots"
 echo
 

@@ -10,7 +10,11 @@ if [ -n "$BASH_VERSION" ] && [ "$(uname)" = "Darwin" ]; then
 fi
 # --- End Launcher ---
 
-source ./gl-functions.sh
+# Determine the absolute path of the directory where the script is located
+# This is a robust way to get the script's directory, even with symlinks.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" &> /dev/null && pwd)"
+
+source "$SCRIPT_DIR/gl-functions.sh"
 
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <TL_folder>"
