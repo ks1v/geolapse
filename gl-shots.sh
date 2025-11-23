@@ -183,6 +183,8 @@ while IFS= read -r line; do
 done < <(for item in "${temp_photo_data[@]}"; do echo "$item"; done | sort -n)
 
 
+echo ""
+echo "=== Writing new EXIF ==="
 
 # This loop iterates through the photos and the GPX track simultaneously.
 GPX_INDEX=1

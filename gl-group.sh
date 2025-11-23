@@ -68,12 +68,6 @@ fi
 for item in "${file_data[@]}"; do
     IFS='|' read -r timestamp file <<< "$item"
 
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        timestamp=$(date -j -f "%Y-%m-%d %H:%M:%S" "$iso_datetime" "+%s")
-    else
-        timestamp=$(date -d "$iso_datetime" "+%s")
-    fi
-    
     if [ -z "$prev_file" ]; then
         # First file
         prev_file="$file"
