@@ -19,4 +19,6 @@ Written in shell, for both MacOS's zsh and Ubuntu WSL's bash
 * [x] Add elevation data
 * [x] Why GPS don't show on Samgung? (LatRef and LonRef are neccessery fields)
 * [x] Skip manual timestamp input if GPS track is aligned with the first image 
-* [ ] Find shots with birds in timelapses 
+* [ ] TL: Detect motion in the beg and end and remove such frames
+* [ ] TL: Add resolution to built TL videos
+* [ ] TL: Motion analysis for possible intruders like birds or so (save a percentile by motion)
