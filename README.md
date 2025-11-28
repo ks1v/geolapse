@@ -21,4 +21,7 @@ Written in shell, for both MacOS's zsh and Ubuntu WSL's bash
 * [x] Skip manual timestamp input if GPS track is aligned with the first image 
 * [ ] TL: Detect motion in the beg and end and remove such frames
 * [ ] TL: Add resolution to built TL videos
-* [ ] TL: Motion analysis for possible intruders like birds or so (save a percentile by motion)
+* [ ] Detect interesting shots among TL frames:
+    * [ ] TL: build a filestamped copies for manual identification
+    * [ ] TL: Motion analysis for possible intruders like birds or so (save a percentile by motion)
+
