@@ -26,6 +26,13 @@ framerate=30
 
 check_install "ffmpeg"
 
+# Check if any TL_* folders exist before looping
+if ! ls -d "$TL_DIR"/TL_* >/dev/null 2>&1; then
+    echo "No timelapse series folders (TL_*) found in $TL_DIR."
+    echo "Done"
+    exit 0
+fi
+
 # Process each TL subfolder
 for subfolder in "$TL_DIR"/TL_*; do
     [ -d "$subfolder" ] || continue
