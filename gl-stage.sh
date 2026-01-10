@@ -27,7 +27,6 @@ TEMP_DIR="$STAGE_DIR/TEMP"
 
 
 # 1. Setup and Preparation
-check_install "exiftool"
 echo "Creating temporary directory: $TEMP_DIR"
 mkdir -p "$TEMP_DIR"
 check_status "Failed to create temporary directory $TEMP_DIR."
@@ -65,19 +64,19 @@ for subfolder in "$DCIM_DIR"/*/ ; do
     # Start progress line
     echo -n "$subfolder_name: $file_count files - 0%"
 
-    # 3. Get EXIF data and rename
-    while IFS=',' read -r filename datetime; do
+    # 3. Rename files
+    for fullpath in "$subfolder"*.JPG; do
+        [ -f "$fullpath" ] || continue
+        filename=$(basename "$fullpath")
         ((processed_count++))
         
-        if [[ -n "$datetime" && "$filename" == *.JPG ]]; then
-            temp="${filename#DSC}"
-            numeric_part="${temp%.JPG}"
-            
-            if [[ ${#numeric_part} -eq 5 && "$numeric_part" =~ ^[0-9]+$ ]]; then
-                new_name="${subfolder_part}_${numeric_part}.jpg"
-                mv "$subfolder$filename" "$TEMP_DIR/$new_name"
-                ((renamed_count++))
-            fi
+        temp="${filename#DSC}"
+        numeric_part="${temp%.JPG}"
+        
+        if [[ ${#numeric_part} -eq 5 && "$numeric_part" =~ ^[0-9]+$ ]]; then
+            new_name="${subfolder_part}_${numeric_part}.jpg"
+            mv "$fullpath" "$TEMP_DIR/$new_name"
+            ((renamed_count++))
         fi
         
         # Update progress 
@@ -85,8 +84,7 @@ for subfolder in "$DCIM_DIR"/*/ ; do
             current_percent=$(( processed_count * 100 / file_count ))
             echo -ne "\r$subfolder_name: $file_count files - ${current_percent}%"
         fi
-    done < <(exiftool -d "%H%M%S" -p '$filename,$DateTimeOriginal' "$subfolder"*.JPG 2>/dev/null)
-    #done < <(exiftool -d "%Y%m%d_%H%M%S" -p '$filename,$DateTimeOriginal' "$subfolder"*.JPG 2>/dev/null)
+    done
     
     # Final status update for the subfolder
     echo -e "\r$subfolder_name: $file_count files processed, $renamed_count moved.          "
