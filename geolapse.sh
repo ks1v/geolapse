@@ -18,18 +18,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" &> /dev/null && pwd)"
 source "$SCRIPT_DIR/gl-functions.sh"
 
 # Configuration
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    STAGE="$HOME/Stage"
-elif grep -qi microsoft /proc/version 2>/dev/null; then
-    STAGE="/mnt/c/Users/micro/Stage"
+if grep -qi microsoft /proc/version 2>/dev/null; then
+    STAGE_DIR="/mnt/c/Users/micro/Stage/TL"
 else
-    STAGE="$HOME/Stage"
+    STAGE_DIR="$HOME/Stage/TL"
 fi
 
-TL_PATH="$STAGE/TL"
-TEMP_PATH="$TL_PATH/TEMP"
-
-echo "Stage location: $STAGE"
+echo "Stage location: $STAGE_DIR"
 echo
 
 if [ $# -eq 0 ]; then
@@ -48,25 +43,25 @@ check_status "DCIM folder not found"
 echo "Source set: $DCIM_PATH"
 
 echo "Step 2: Rename and move files from DCIM to TEMP"
-"$SCRIPT_DIR/gl-stage.sh" "$DCIM_PATH" "$TEMP_PATH"
+"$SCRIPT_DIR/gl-stage.sh" "$DCIM_PATH" "$STAGE_DIR"
 check_status "Failed to process DCIM files"
 echo
 
 #sudo umount "$SD_MOUNT"
 
 echo "Step 3: Grouping timelapse series"
-"$SCRIPT_DIR/gl-group.sh" "$TEMP_PATH" "$TL_PATH"
+"$SCRIPT_DIR/gl-group.sh" "$STAGE_DIR"
 check_status "Failed to group timelapse series"
 echo
 
 echo "Step 4: Generating videos from timelapse series"
-"$SCRIPT_DIR/gl-build.sh" "$TL_PATH"
+"$SCRIPT_DIR/gl-build.sh" "$STAGE_DIR"
 check_status "Failed to generate videos"
-echo "Videos are located in: $TL_PATH"
+echo "Videos are located in: $STAGE_DIR"
 echo
 
 echo "Step 5: Renaming non-timelapse shots and fixing it's EXIF data"
-"$SCRIPT_DIR/gl-shots.sh" "$TL_PATH/MISC/"
+"$SCRIPT_DIR/gl-shots.sh" "$STAGE_DIR/SHOTS"
 check_status "Failed to rename non-timelapse shots"
 echo
 

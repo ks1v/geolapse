@@ -10,16 +10,17 @@ if [ -n "$BASH_VERSION" ] && [ "$(uname)" = "Darwin" ]; then
 fi
 # --- End Launcher ---
 
-if [ $# -ne 2 ]; then
-    echo "Usage: $0 <TEMP_folder> <TL_folder>"
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <STAGE_folder>"
     exit 1
 fi
-TEMP_DIR="$1"
-TL_DIR="$2"
+STAGE_DIR="$1"
+TEMP_DIR="$STAGE_DIR/TEMP"
+SHOTS_DIR="$STAGE_DIR/SHOTS"
 
-# Create TL and MISC folders
-mkdir -p "$TL_DIR"
-mkdir -p "$TL_DIR/MISC"
+# Create TL and SHOTS folders
+mkdir -p "$STAGE_DIR"
+mkdir -p "$SHOTS_DIR"
 
 # Function to move series files
 move_series() {
@@ -32,7 +33,7 @@ move_series() {
     if [ $num -gt 10 ]; then
         local rnd="$(LC_ALL=C tr -dc 'a-zA-Z' < /dev/urandom | head -c 3)"
         local series_folder="TL_${count}_D-${delay}_N-${num}_${rnd}"
-        local series_path="$TL_DIR/$series_folder"
+        local series_path="$STAGE_DIR/$series_folder"
         mkdir -p "$series_path"
         for f in "${files[@]}"; do
             mv "$TEMP_DIR/$f" "$series_path/"
@@ -40,9 +41,9 @@ move_series() {
         echo " -> $series_folder"
     else
         for f in "${files[@]}"; do
-            mv "$TEMP_DIR/$f" "$TL_DIR/MISC/"
+            mv "$TEMP_DIR/$f" "$SHOTS_DIR/"
         done
-        echo " -> MISC"
+        echo " -> SHOTS"
     fi
 }
 

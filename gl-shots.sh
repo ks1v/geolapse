@@ -21,11 +21,11 @@ if [[ $# -lt 1 || $# -gt 2 ]]; then
     exit 1
 fi
 
-IMG_DIR="$1"
+SHOTS_DIR="$1"
 GPX_FILE="$2"
 
 # Validate photos folder
-if [ ! -d "$IMG_DIR" ]; then
+if [ ! -d "$SHOTS_DIR" ]; then
     echo "Error: Photos folder not found"
     exit 1
 fi
@@ -36,7 +36,7 @@ check_install "xmlstarlet"
 # --- Main Execution ---
 
 echo "=== Rebuilding EXIF data ==="
-exiftool -q -q -m -overwrite_original -all= -tagsfromfile @ -all:all --MakerNotes --ComponentsConfiguration -unsafe -icc_profile "$IMG_DIR" 2>/dev/null
+exiftool -q -q -m -overwrite_original -all= -tagsfromfile @ -all:all --MakerNotes --ComponentsConfiguration -unsafe -icc_profile "$SHOTS_DIR" 2>/dev/null
 
 # --- Optional GPX Handling ---
 if [[ -z "$GPX_FILE" ]]; then
@@ -125,10 +125,10 @@ fi
 echo ""
 echo "=== Calculate datetime offset ==="
 
-FIRST_IMG=$(find "$IMG_DIR" -type f '(' -name "*.jpg" ')' | sort | head -1)
+FIRST_IMG=$(find "$SHOTS_DIR" -type f '(' -name "*.jpg" ')' | sort | head -1)
 if [ -z "$FIRST_IMG" ]; then
     echo "No JPG files found in folder" >&2
-    exit 1
+    exit 0
 fi
 
 echo "First photo: $(basename "$FIRST_IMG")" >&2
@@ -174,12 +174,12 @@ while IFS='|' read -r filepath exif_dt; do
         echo "$(basename "$filepath"): $exif_dt -> $actual_dt" >&2
         temp_photo_data+=("$actual_ts|$filepath")
     fi
-done < <(exiftool -d "%Y-%m-%d %H:%M:%S" -p '$directory/$filename|$DateTimeOriginal' "$IMG_DIR"/*.jpg 2>/dev/null)
+done < <(exiftool -d "%Y-%m-%d %H:%M:%S" -p '$directory/$filename|$DateTimeOriginal' "$SHOTS_DIR"/*.jpg 2>/dev/null)
 
 # Sort the data numerically by timestamp and load into the final array
-IMG_DIR_TS=()
+SHOTS_DIR_TS=()
 while IFS= read -r line; do
-    IMG_DIR_TS+=("$line")
+    SHOTS_DIR_TS+=("$line")
 done < <(for item in "${temp_photo_data[@]}"; do echo "$item"; done | sort -n)
 
 
@@ -190,7 +190,7 @@ echo "=== Writing new EXIF ==="
 GPX_INDEX=1
 now_for_exif=$(date "+%Y:%m:%d %H:%M:%S")
 
-for item in "${IMG_DIR_TS[@]}"; do
+for item in "${SHOTS_DIR_TS[@]}"; do
     IFS='|' read -r actual_ts filepath <<< "$item"
 
     actual_dt=$(unix_to_iso "$actual_ts")
@@ -247,7 +247,7 @@ echo ""
 echo "=== Renaming files ==="
 # Rename files based on actual datetime
 # Iterate through the sorted photo data to ensure consistent renaming order.
-for item in "${IMG_DIR_TS[@]}"; do
+for item in "${SHOTS_DIR_TS[@]}"; do
     IFS='|' read -r actual_ts filepath <<< "$item"
     
     # Generate new filename: YYYYMMDD_HHMMSS.jpg
@@ -278,7 +278,7 @@ else
     check_condition='$DateTimeOriginal =~ /^2016/'
 fi
 unprocessed_files=$(exiftool -m -n -q -p '$filename | $DateTimeOriginal | $GPSLatitude, $GPSLongitude, $GPSAltitude' \
-    -d '%Y-%m-%d %H:%M:%S' -if "$check_condition" "$IMG_DIR")
+    -d '%Y-%m-%d %H:%M:%S' -if "$check_condition" "$SHOTS_DIR")
 
 if [[ -n "$unprocessed_files" ]]; then
     echo "Untreated files found:"

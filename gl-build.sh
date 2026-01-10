@@ -17,24 +17,24 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" &> /dev/null && pwd)"
 source "$SCRIPT_DIR/gl-functions.sh"
 
 if [ $# -ne 1 ]; then
-    echo "Usage: $0 <TL_folder>"
+    echo "Usage: $0 <STAGE_folder>"
     exit 1
 fi
 
-TL_DIR="$1"
+STAGE_DIR="$1"
 framerate=30
 
 check_install "ffmpeg"
 
 # Check if any TL_* folders exist before looping
-if ! ls -d "$TL_DIR"/TL_* >/dev/null 2>&1; then
-    echo "No timelapse series folders (TL_*) found in $TL_DIR."
+if ! ls -d "$STAGE_DIR"/TL_* >/dev/null 2>&1; then
+    echo "No timelapse series folders (TL_*) found in $STAGE_DIR."
     echo "Done"
     exit 0
 fi
 
 # Process each TL subfolder
-for subfolder in "$TL_DIR"/TL_*; do
+for subfolder in "$STAGE_DIR"/TL_*; do
     [ -d "$subfolder" ] || continue
     
     subfolder_name=$(basename "$subfolder")
@@ -46,7 +46,7 @@ for subfolder in "$TL_DIR"/TL_*; do
     # Calculate speed up factor (delay * framerate)
     speedup=$((delay * framerate))
     
-    output_video="$TL_DIR/TL_${series_num}_D-${delay}_${speedup}x.mp4"
+    output_video="$STAGE_DIR/TL_${series_num}_D-${delay}_${speedup}x.mp4"
     
     echo "Processing $subfolder_name..."
     

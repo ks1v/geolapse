@@ -132,7 +132,6 @@ check_install(){
     app_name="$1"
 
     if command -v "$app_name" >/dev/null 2>&1; then
-        echo "$app_name is installed."
         return 0
     fi
 

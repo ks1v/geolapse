@@ -12,7 +12,7 @@ Written in shell, for both MacOS's zsh and Ubuntu WSL's bash
 * geolapse.sh -- run the whole pipeline
 
 # TODO:
-* [ ] Test on Ubuntu WSL
+* [x] Test on Ubuntu WSL
 * [x] Test on MacOS
 * [x] Unique TL folder
 * [x] Reassemble logic for GPX data
