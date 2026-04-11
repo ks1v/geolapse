@@ -43,6 +43,14 @@ if [[ -z "$GPX_FILE" ]]; then
     echo ""
     echo -n "Enter path to GPX file (or press Enter to skip geotagging): "
     read -r GPX_FILE
+    # Normalize pasted path:
+    #   1. trim leading/trailing whitespace (common with copy-paste)
+    #   2. strip surrounding quotes (e.g. dragged from some apps)
+    #   3. expand leading ~ to $HOME (read -r captures it literally)
+    GPX_FILE="$(printf '%s' "$GPX_FILE" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+    GPX_FILE="${GPX_FILE#\"}" ; GPX_FILE="${GPX_FILE%\"}"
+    GPX_FILE="${GPX_FILE#\'}" ; GPX_FILE="${GPX_FILE%\'}"
+    GPX_FILE="${GPX_FILE/#\~/$HOME}"
 fi
 
 HAS_GPX=false
