@@ -54,6 +54,13 @@ echo "Step 3: Grouping timelapse series"
 check_status "Failed to group timelapse series"
 echo
 
+exit;
+
+echo "Step 3.5: Removing camera-shake frames from timelapse series"
+"$SCRIPT_DIR/gl-clean.sh" "$STAGE_DIR"
+check_status "Failed to clean timelapse series"
+echo
+
 echo "Step 4: Generating videos from timelapse series"
 "$SCRIPT_DIR/gl-build.sh" "$STAGE_DIR"
 check_status "Failed to generate videos"

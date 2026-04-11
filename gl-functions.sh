@@ -140,6 +140,10 @@ check_install(){
     if [[ "$app_name" == "exiftool" && ("$OSTYPE" == "linux-gnu"* || "$OSTYPE" == "linux"*) ]]; then
         install_name="libimage-exiftool-perl"
     fi
+    # compare is part of the imagemagick package on all platforms
+    if [[ "$app_name" == "compare" ]]; then
+        install_name="imagemagick"
+    fi
 
     echo "$app_name not found. Attempting installation..."
     if [[ "$OSTYPE" == "darwin"* ]]; then
